@@ -1,11 +1,12 @@
-#include <bits/stdc++.h>
+#include <iostream>
+#include <cstring>
 #include <crtdbg.h>
 class String
 {
 private:
     char *str;
     int size;
-    void print(std::ostream &os)
+    void print(std::ostream &os) const
     {
         os << str;
     }
@@ -17,7 +18,7 @@ public:
     // - explicit is used to oblige casting
     // String s = std::string("Name"); # Error
     // String s = String(std::string("Name")); # No Error
-    explicit String(char str[])
+    explicit String(const char *str)
     {
         this->size = strlen(str);
         this->str = new char[size + 1];
@@ -31,10 +32,6 @@ public:
         str = nullptr;
         std::cout << "Destructor Called" << std::endl;
     }
-    // Overload printing
-    friend std::ostream &operator<<(std::ostream &os, String &obj);
-    // Length
-    int len() { return this->size; }
 
     // Copy constructor
     String(const String &obj)
@@ -46,7 +43,7 @@ public:
     }
 
     // Copy assignment
-    String &operator=(String &obj)
+    String &operator=(const String &obj)
     {
         if (this == &obj)
         {
@@ -99,8 +96,9 @@ public:
         return *this;
     }
 
-    // Concatenation operators
-    String &operator+=(char str[])
+    //-------------- Operators overloading --------------//
+    // Concatenation operator with const string
+    String &operator+=(const char *str)
     {
         // Assign new data
         int newSize = this->size + strlen(str);
@@ -116,17 +114,100 @@ public:
 
         newStr = nullptr;
 
-        std::cout << "Concat operator called: str = " << this->str << ", size = " << this->size << std::endl;
+        std::cout << "Obj concat operator called: str = " << this->str << ", size = " << this->size << std::endl;
 
         return *this;
     }
 
+    // Concatenation operator with object string
     String &operator+=(String &obj)
     {
         return *this += obj.str;
     }
+
+    // Subscript operator
+    char &operator[](int index)
+    {
+        return this->str[index];
+    }
+
+    bool operator==(const String &obj)
+    {
+        return (this->size == obj.size) && strcmp(this->str, obj.str);
+    }
+
+    bool operator!=(const String &obj)
+    {
+        return !(*this == obj);
+    }
+
+    bool operator<(const String &obj)
+    {
+        return this->size < obj.size;
+    }
+
+    bool operator>(const String &obj)
+    {
+        return this->size > obj.size;
+    }
+
+    //-------------- String methods --------------//
+    // Begin
+    char *begin()
+    {
+        return this->str;
+    }
+
+    // End
+    char *end()
+    {
+        return this->str + this->size;
+    }
+
+    // Length
+    int len() const
+    {
+        return this->size;
+    }
+
+    // Substring
+    String substr(int start, int length)
+    {
+        if (start < 0 || start >= this->size || length < 0)
+            return String("");
+
+        int realLength = std::min(length, this->size);
+
+        String subString;
+        subString.str = new char[realLength + 1];
+        memcpy(subString.str, this->str + start, realLength);
+        subString.str[realLength] = '\0';
+        subString.size = realLength;
+        return subString;
+    }
+
+    // Find
+    int find(char x)
+    {
+        int idx = 0;
+        for (auto i : *this)
+        {
+            if (i == x)
+            {
+                return idx;
+            }
+            idx++;
+        }
+        return -1;
+    }
+
+    //-------------- Friend stream operators --------------//
+    // 1- Overload printing
+    friend std::ostream &operator<<(std::ostream &os, const String &obj);
+    // 2- Overload input
+    friend std::istream &operator>>(std::istream &is, String &obj);
 };
-std::ostream &operator<<(std::ostream &os, String &obj)
+std::ostream &operator<<(std::ostream &os, const String &obj)
 {
     if (obj.str != nullptr)
         obj.print(os);
@@ -134,7 +215,21 @@ std::ostream &operator<<(std::ostream &os, String &obj)
         os << "String is empty";
     return os;
 }
+// Overload input
+std::istream &operator>>(std::istream &is, String &obj)
+{
+    char inputString[1024];
+    is >> inputString;
+    if (obj.str)
+    {
+        delete[] obj.str;
+    }
+    obj.size = strlen(inputString);
+    obj.str = new char[obj.size + 1];
 
+    memcpy(obj.str, inputString, obj.size + 1);
+    return is;
+}
 int main()
 {
     // Check Memory leakage
@@ -155,22 +250,6 @@ int main()
     std::cout << "Test copy constructor" << std::endl
               << "----------------------------------" << std::endl;
     String s1(s);
-    // Test print
-    std::cout << s1 << std::endl;
-    std::cout << "----------------------------------" << std::endl;
-
-    // Test concat operator
-    std::cout << "Test concat operator" << std::endl
-              << "----------------------------------" << std::endl;
-    s1 += "oooo";
-    // Test print
-    std::cout << s1 << std::endl;
-    std::cout << "----------------------------------" << std::endl;
-
-    // Test concat operator
-    std::cout << "Test obj concat operator" << std::endl
-              << "----------------------------------" << std::endl;
-    s1 += s;
     // Test print
     std::cout << s1 << std::endl;
     std::cout << "----------------------------------" << std::endl;
@@ -226,6 +305,72 @@ int main()
     // Test print
     std::cout << s5 << std::endl;
     std::cout << s6 << std::endl;
+    std::cout << "----------------------------------" << std::endl;
+
+    //---------------- Test Operators ----------------//
+    // Test comparison operators
+    std::cout << "Test comparison operators" << std::endl
+              << "----------------------------------" << std::endl;
+    String string1("Hamid");
+    String string2("Hamid");
+    std::cout << "String 1 = " << string1 << std::endl;
+    std::cout << "String 2 = " << string2 << std::endl;
+
+    std::cout << "== : " << (string1 == string2) << std::endl;
+    std::cout << "!= : " << (string1 != string2) << std::endl;
+    std::cout << "< : " << (string1 < string2) << std::endl;
+    std::cout << "> : " << (string1 > string2) << std::endl;
+
+    std::cout << "----------------------------------" << std::endl;
+
+    // Test input operator
+    std::cout << "Test input operator" << std::endl
+              << "----------------------------------" << std::endl;
+    String inputString;
+    std::cout << "Enter string:" << std::endl;
+    std::cin >> inputString;
+    // Test print
+    std::cout
+        << inputString << std::endl;
+    std::cout << "----------------------------------" << std::endl;
+
+    // Test subscript operator
+    std::cout << "Test subscript operator" << std::endl
+              << "----------------------------------" << std::endl;
+    // Test print
+    std::cout << "The 2 index of the string is: " << inputString[2] << std::endl;
+    std::cout << "----------------------------------" << std::endl;
+
+    // Test concat operator
+    std::cout << "Test concat operator" << std::endl
+              << "----------------------------------" << std::endl;
+    s1 += "oooo";
+    // Test print
+    std::cout << s1 << std::endl;
+    std::cout << "----------------------------------" << std::endl;
+
+    // Test concat operator
+    std::cout << "Test obj concat operator" << std::endl
+              << "----------------------------------" << std::endl;
+    s1 += s;
+    // Test print
+    std::cout << s1 << std::endl;
+    std::cout << "----------------------------------" << std::endl;
+
+    //---------------- Test String methods ----------------//
+    // Test substring
+    std::cout << "Test substring method" << std::endl
+              << "----------------------------------" << std::endl;
+    String subString1("Hamid");
+    String subString2 = subString1.substr(1, 2);
+    std::cout << "Original string = " << subString1 << " , Substring = " << subString2 << std::endl;
+    std::cout << "----------------------------------" << std::endl;
+
+    // Test substring
+    std::cout << "Test find method" << std::endl
+              << "----------------------------------" << std::endl;
+    String findString("Hamid");
+    std::cout << "Original string = " << findString << " , the index of m = " << findString.find('m') << std::endl;
     std::cout << "----------------------------------" << std::endl;
 
     return 0;
